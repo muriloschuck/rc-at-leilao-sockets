@@ -23,15 +23,20 @@ public class Cliente implements Runnable {
     public void run() {
         try {
             while (true) {
-                List<ItemLeilao> itens = LeilaoServidor.getItens();
-                out.writeObject(itens);
+                ItemLeilao itemAtual = LeilaoServidor.getItemAtual();
+                
                 out.flush();
-
-                Lance lance = (Lance) in.readObject();
-                boolean lanceAceito = LeilaoServidor.fazerLance(lance.getNumeroItem(), lance.getValor());
+                out.writeObject(itemAtual.copy());
+                
+                // todo: timeout
+                
+                System.out.println("Aguardando lances...");
+                Lance lanceFeito = (Lance) in.readObject();
+                
+                boolean lanceAceito = LeilaoServidor.fazerLance(lanceFeito);
 
                 if (lanceAceito) {
-                    System.out.println("Novo lance recebido: $" + lance.getValor());
+                    System.out.println("Novo lance recebido: $" + lanceFeito.getValor());
                 } else {
                     System.out.println("Lance rejeitado. O lance atual é maior ou igual.");
                 }
