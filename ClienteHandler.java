@@ -1,21 +1,20 @@
+import model.Item;
+import model.Lance;
+
 import java.io.*;
 import java.net.*;
-import java.util.*;
-
-
-
-public class Cliente implements Runnable {
-    private Socket clientSocket;
+public class ClienteHandler implements Runnable {
+    private final Socket clientSocket;
     private ObjectInputStream in;
     private ObjectOutputStream out;
 
-    public Cliente(Socket socket) {
+    public ClienteHandler(final Socket socket) {
         this.clientSocket = socket;
         try {
             this.out = new ObjectOutputStream(clientSocket.getOutputStream());
             this.in = new ObjectInputStream(clientSocket.getInputStream());
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (final IOException ex) {
+            ex.printStackTrace();
         }
     }
 
@@ -23,15 +22,15 @@ public class Cliente implements Runnable {
     public void run() {
         try {
             while (true) {
-                ItemLeilao itemAtual = LeilaoServidor.getItemAtual();
+                final Item itemAtual = LeilaoServidor.getItemAtual();
                 
-                out.flush();
                 out.writeObject(itemAtual.copy());
-                
+                out.flush();
+
                 // todo: timeout
                 
                 System.out.println("Aguardando lances...");
-                Lance lanceFeito = (Lance) in.readObject();
+                final Lance lanceFeito = (Lance) in.readObject();
                 
                 boolean lanceAceito = LeilaoServidor.fazerLance(lanceFeito);
 
@@ -41,13 +40,13 @@ public class Cliente implements Runnable {
                     System.out.println("Lance rejeitado. O lance atual é maior ou igual.");
                 }
             }
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+        } catch (final IOException | ClassNotFoundException ex) {
+            ex.printStackTrace();
         } finally {
             try {
                 clientSocket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (final IOException ex) {
+                ex.printStackTrace();
             }
         }
     }

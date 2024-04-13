@@ -1,27 +1,29 @@
+import model.Item;
+import model.Lance;
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
 public class LeilaoServidor {
-    private static List<ItemLeilao> itens = new ArrayList<>();
-    private static ItemLeilao itemAtual;
-    private static int lanceAtual = 0;
+    private final static List<Item> itens = new ArrayList<>();
+    private static Item itemAtual;
+    public static void main(final String[] args) {
+        // Lista de itens do Leilão
+        itens.add(new Item(1, "Computador", 500));
+        itens.add(new Item(2, "Mouse", 50));
+        itens.add(new Item( 3, "Telefone", 200));
 
-    public static void main(String[] args) {
-        // Adiciona alguns itens de exemplo
-        adicionarItem(new ItemLeilao(1, "Computador", 500));
-        adicionarItem(new ItemLeilao(2, "Telefone", 200));
-        
         itemAtual = itens.get(0);
 
-        try (ServerSocket serverSocket = new ServerSocket(6071)) {
+        try (ServerSocket serverSocket = new ServerSocket(Config.SERVER_PORT)) {
             System.out.println("Servidor iniciado. Aguardando conexões...");
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Novo cliente conectado: " + clientSocket);
 
-                Thread t = new Thread(new Cliente(clientSocket));
+                Thread t = new Thread(new ClienteHandler(clientSocket));
                 t.start();
             }
         } catch (IOException e) {
@@ -29,12 +31,8 @@ public class LeilaoServidor {
         }
     }
 
-    public static synchronized void adicionarItem(ItemLeilao item) {
-        itens.add(item);
-    }
-
     public static synchronized boolean fazerLance(Lance lance) {
-    	if(itemAtual.getLanceAtual() >= lance.getValor()) {
+    	if (itemAtual.getLanceAtual() >= lance.getValor()) {
     		return false;
     	}
     	
@@ -42,7 +40,7 @@ public class LeilaoServidor {
     	return true;
     }
 
-    public static synchronized ItemLeilao getItemAtual() {
+    public static synchronized Item getItemAtual() {
     	return itemAtual;
     }
     
