@@ -22,10 +22,10 @@ public class LeilaoServidor {
         itens.add(new Item(2, "Mouse", 50));
         itens.add(new Item(3, "Telefone", 200));
         itens.add(new Item(4, "Teclado", 150));
-        listaVendas.add(0, null);
-        listaVendas.add(1, null);
-        listaVendas.add(2, null);
-        listaVendas.add(3, null);
+        listaVendas.add(0, new Pair<Item, Jogador>(new Item(1, "Computador", 500), new Jogador("ninguem")));
+        listaVendas.add(1, new Pair<Item, Jogador>(new Item(2, "Mouse", 50), new Jogador("ninguem")));
+        listaVendas.add(2, new Pair<Item, Jogador>(new Item(3, "Telefone", 200), new Jogador("ninguem")));
+        listaVendas.add(3, new Pair<Item, Jogador>(new Item(4, "Teclado", 150), new Jogador("ninguem")));
 
         numeroItemAtual = 0;
         itemAtual = itens.get(numeroItemAtual);
