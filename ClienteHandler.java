@@ -1,9 +1,12 @@
 import model.Item;
+import model.Jogador;
 import model.Lance;
-import model.SOCKET_TYPE;
+import model.RespostaLance;
+import utils.Pair;
 
 import java.io.*;
 import java.net.*;
+import java.util.List;
 
 public class ClienteHandler implements Runnable {
     private final Socket clientSocket;
@@ -23,54 +26,47 @@ public class ClienteHandler implements Runnable {
     @Override
     public void run() {
         try {
-            // Espera a conexao se identificar, sempre recebe o jogador e em seguida se é o socket principal ou de contagem
-            final SOCKET_TYPE socketType = (SOCKET_TYPE) in.readObject();
-
-            if (socketType == SOCKET_TYPE.COUNTDOWN_SOCKET) {
-                final Thread t = new Thread(new ServidorContagemThread(this.out));
-                t.start();
-                return;
-            }
-
-            System.out.println("works until here");
-
             while (true) {
                 // #1 Envia o item atual para o cliente
                 final Item itemAtual = LeilaoServidor.getItemAtual();
                 this.out.writeObject(itemAtual.copy());
                 this.out.flush();
 
-                // #2 Espera por Lance do cliente
+                // #2 Envia a contagem atual
+                final int contagemAtual = LeilaoServidor.getContador();
+                this.out.writeInt(contagemAtual);
+                this.out.flush();
+
+                // #3 Espera por Lance do cliente
                 System.out.println("Aguardando lances...");
                 final Lance lanceRecebido = (Lance) in.readObject();
+                final Jogador jogador = (Jogador) in.readObject();
 
-                boolean lanceAceito = LeilaoServidor.fazerLance(lanceRecebido);
+                final RespostaLance respostaLance = LeilaoServidor.fazerLance(lanceRecebido, jogador);
 
-                if (lanceAceito) {
+                // #4 Envia resultado do lance para o cliente
+                out.writeObject(respostaLance);
+                out.flush();
+
+                if (respostaLance.ehValido()) {
                     System.out.println("Novo lance recebido: $" + lanceRecebido.getValor());
+                } else if (respostaLance.getMotivo().equals("Fim dos itens disponiveis")) {
+                    // caso seja o fim da lista, envie a lista de itens vendidos
+                    out.writeObject(respostaLance.getApendice());
+                    out.flush();
+                    System.out.println("Desconectando " + clientSocket);
+                    clientSocket.close();
                 } else {
-                    System.out.println("Lance rejeitado. O lance atual é maior ou igual.");
+                    System.out.println("Lance rejeitado. Motivo: [" + respostaLance.getMotivo() + "]");
                 }
 
-                // #3 Envia resultado do lance para o cliente
-                out.writeBoolean(lanceAceito);
-                out.flush();
             }
         } catch (final IOException | ClassNotFoundException ex) {
-            ex.printStackTrace();
-        } finally {
-            try {
-                clientSocket.close();
-            } catch (final IOException ex) {
+            if (ex instanceof SocketException) {
+                System.out.println("> Socket closed.");
+            } else {
                 ex.printStackTrace();
             }
         }
-    }
-
-    private void comecaContagem() {
-        final Thread contagemThread = new Thread(() -> {
-        });
-
-        contagemThread.start();
     }
 }
